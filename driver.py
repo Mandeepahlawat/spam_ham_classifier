@@ -5,5 +5,6 @@ def main():
 	classifier.build_model()
 	classifier.add_smoothing()
 	classifier.write_model_data()
+	classifier.test_model()
 
 main()
