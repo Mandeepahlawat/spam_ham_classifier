@@ -6,5 +6,5 @@ def main():
 	classifier.add_smoothing()
 	classifier.write_model_data()
 	classifier.test_model()
-
+	classifier.experiment2_stop_words()
 main()

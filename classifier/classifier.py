@@ -137,3 +137,51 @@ class Classifier:
 			file.close()
 		
 		file_to_write.close()
+
+	def experiment2_stop_words(self):
+		stop_word_vocabulary = self.vocabulary[:]
+		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
+		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
+		spam_vocabulary_probs = {}
+		ham_vocabulary_probs = {}
+
+		#build model
+		file_input = open(Classifier.DATASET_PATH+"/stopWords.txt")
+		lines = file_input.readlines()
+		stop_words = []
+		for line in lines:
+				words_list = re.split('[^a-zA-Z]',line.lower())
+				# remove empty strings
+				words_list = [word for word in words_list if word]
+				# populate vocabulary
+				for word in words_list:
+					# push data in vocabulary
+					stop_words.append(word)
+
+		for word in stop_words:
+			if word in stop_word_vocabulary:
+				stop_word_vocabulary.remove(word)
+				spam_total_words-=self.spam_vocabulary_frequencies[word]
+				ham_total_words-=self.ham_vocabulary_frequencies[word]
+		
+		file_input.close()
+			
+		#write model
+		file = open('stopword-model.txt', "w")
+		for index, word in enumerate(sorted(stop_word_vocabulary)):
+			ham_vocabulary_probs[word] = self.ham_vocabulary_frequencies[word]/ham_total_words
+			spam_vocabulary_probs[word] = self.spam_vocabulary_frequencies[word]/spam_total_words
+
+			index = int(index) + 1
+			if index != 1:
+				file.write("\n")
+			file.write("%s  " % index)
+			file.write(word + '  ')
+			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
+			file.write("%s  " % self.ham_vocabulary_probs[word])
+			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
+			file.write("%s" % self.spam_vocabulary_probs[word])
+
+		file.close()
+
+
