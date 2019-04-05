@@ -219,6 +219,8 @@ class Classifier:
 		#build model
 		for word in self.vocabulary:
 			word_frequency = self.spam_vocabulary_frequencies[word] + self.ham_vocabulary_frequencies[word]
+			#subtract smoothing frequency before checking the threshold
+			word_frequency-=(2*Classifier.SMOOTHING_DELTA)
 			if word_frequency <= cutoff_frequency:
 				frequency_filtered_vocabulary.remove(word)
 				spam_total_words-=self.spam_vocabulary_frequencies[word]
