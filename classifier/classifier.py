@@ -62,7 +62,7 @@ class Classifier:
 
 	def write_model_data(self, output_file_name, vocabulary, spam_total_word_count=None, ham_total_word_count=None):
 		file = open(output_file_name, "w")
-		print("Writing model data to %s" % output_file_name)
+		print("Writing to %s" % output_file_name)
 		spam_total_words = 0
 		ham_total_words = 0
 		spam_vocabulary_probs = {}
@@ -94,7 +94,7 @@ class Classifier:
 
 	def test_model(self, output_file_name, spam_prob, ham_prob):
 		file_to_write = open(output_file_name, "w")
-		print("Writing test data to %s" % output_file_name)
+		print("Writing to %s" % output_file_name)
 		all_training_file_names = os.listdir(Classifier.TEST_DATASET_PATH)
 		classified_wrong = 0
 		
@@ -188,5 +188,26 @@ class Classifier:
 		
 		#test
 		self.test_model('stopword-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
+
+	
+	def experiment3_length_filtering(self):
+		length_filtered_vocabulary = self.vocabulary[:]
+		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
+		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
+		spam_vocabulary_probs = {}
+		ham_vocabulary_probs = {}
+
+		#build model
+		for word in self.vocabulary:
+			if len(word) <= 2 or len(word) >= 9:
+				length_filtered_vocabulary.remove(word)
+				spam_total_words-=self.spam_vocabulary_frequencies[word]
+				ham_total_words-=self.ham_vocabulary_frequencies[word]
+				
+		#write model
+		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data('wordlength-model.txt', length_filtered_vocabulary, spam_total_words, ham_total_words)
+		
+		#test
+		self.test_model('wordlength-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
 
 
