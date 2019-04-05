@@ -19,6 +19,7 @@ class Classifier:
 		self.ham_vocabulary_probs = {}
 
 	def build_model(self):
+		print("building model...")
 		all_training_file_names = os.listdir(Classifier.TRAIN_DATASET_PATH)
 
 		for file_name in all_training_file_names:
@@ -44,6 +45,7 @@ class Classifier:
 		self.vocabulary = list(set(self.vocabulary))
 
 	def add_smoothing(self):
+		print("adding smoothing")
 		spam_words = self.spam_vocabulary_frequencies.keys()
 		ham_words = self.ham_vocabulary_frequencies.keys()
 
@@ -58,14 +60,24 @@ class Classifier:
 			else:
 				self.ham_vocabulary_frequencies[word] += Classifier.SMOOTHING_DELTA
 
-	def write_model_data(self):
-		file = open('model.txt', "w")
-		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
-		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
+	def write_model_data(self, output_file_name, vocabulary, spam_total_word_count=None, ham_total_word_count=None):
+		file = open(output_file_name, "w")
+		print("Writing model data to %s" % output_file_name)
+		spam_total_words = 0
+		ham_total_words = 0
+		spam_vocabulary_probs = {}
+		ham_vocabulary_probs = {}
+
+		if spam_total_word_count is None:
+			spam_total_words = sum(self.spam_vocabulary_frequencies.values())
+			ham_total_words = sum(self.ham_vocabulary_frequencies.values())	
+		else:
+			spam_total_words = spam_total_word_count
+			ham_total_words = ham_total_word_count
 		
-		for index, word in enumerate(sorted(self.vocabulary)):
-			self.ham_vocabulary_probs[word] = self.ham_vocabulary_frequencies[word]/ham_total_words
-			self.spam_vocabulary_probs[word] =self.spam_vocabulary_frequencies[word]/spam_total_words
+		for index, word in enumerate(sorted(vocabulary)):
+			ham_vocabulary_probs[word] = self.ham_vocabulary_frequencies[word]/ham_total_words
+			spam_vocabulary_probs[word] =self.spam_vocabulary_frequencies[word]/spam_total_words
 
 			index = int(index) + 1
 			if index != 1:
@@ -73,21 +85,24 @@ class Classifier:
 			file.write("%s  " % index)
 			file.write(word + '  ')
 			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s  " % self.ham_vocabulary_probs[word])
+			file.write("%s  " % ham_vocabulary_probs[word])
 			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s" % self.spam_vocabulary_probs[word])
+			file.write("%s" % spam_vocabulary_probs[word])
 
 		file.close()
+		return spam_vocabulary_probs, ham_vocabulary_probs
 
-	def test_model(self):
-		file_to_write = open('baseline-result.txt', "w")
+	def test_model(self, output_file_name, spam_prob, ham_prob):
+		file_to_write = open(output_file_name, "w")
+		print("Writing test data to %s" % output_file_name)
 		all_training_file_names = os.listdir(Classifier.TEST_DATASET_PATH)
+		classified_wrong = 0
 		
-		total_test_file_count = len(all_training_file_names)
+		#total_test_file_count = len(all_training_file_names)
 
 		for index, file_name in enumerate(all_training_file_names):
 			# import pdb; pdb.set_trace()
-			print("** file number %s/%s **" % (index, total_test_file_count))
+			#print("** file number %s/%s **" % (index, total_test_file_count))
 			file = open(Classifier.TEST_DATASET_PATH+"/"+file_name, encoding="latin-1")
 			lines = file.readlines()
 
@@ -104,9 +119,9 @@ class Classifier:
 
 			for word in total_words:
 				#TODO: what to do when the word is not in train data?
-				if(word in self.spam_vocabulary_probs.keys()):
-					spam_score += math.log(self.spam_vocabulary_probs[word])
-					ham_score += math.log(self.ham_vocabulary_probs[word])
+				if(word in spam_prob.keys()):
+					spam_score += math.log(spam_prob[word])
+					ham_score += math.log(ham_prob[word])
 
 			index = int(index) + 1
 			if index != 1:
@@ -133,9 +148,11 @@ class Classifier:
 				file_to_write.write("right")
 			else:
 				file_to_write.write("wrong")
+				classified_wrong+=1
 
 			file.close()
-		
+
+		print('Classified Wrong in %s = %d' % (output_file_name, classified_wrong))
 		file_to_write.close()
 
 	def experiment2_stop_words(self):
@@ -167,21 +184,9 @@ class Classifier:
 		file_input.close()
 			
 		#write model
-		file = open('stopword-model.txt', "w")
-		for index, word in enumerate(sorted(stop_word_vocabulary)):
-			ham_vocabulary_probs[word] = self.ham_vocabulary_frequencies[word]/ham_total_words
-			spam_vocabulary_probs[word] = self.spam_vocabulary_frequencies[word]/spam_total_words
-
-			index = int(index) + 1
-			if index != 1:
-				file.write("\n")
-			file.write("%s  " % index)
-			file.write(word + '  ')
-			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s  " % ham_vocabulary_probs[word])
-			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s" % spam_vocabulary_probs[word])
-
-		file.close()
+		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data('stopword-model.txt', stop_word_vocabulary, spam_total_words, ham_total_words)
+		
+		#test
+		self.test_model('stopword-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
 
 
