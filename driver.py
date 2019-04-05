@@ -10,4 +10,6 @@ def main():
 	classifier.experiment2_stop_words()
 	print("------Experiment 3, Word Length Filtering------")
 	classifier.experiment3_length_filtering()
+	print("------Experiment 4, Frequency Filtering------")
+	classifier.experiment4_frequency_filtering(cutoff_frequency=5)
 main()

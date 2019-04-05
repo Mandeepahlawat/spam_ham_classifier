@@ -188,7 +188,6 @@ class Classifier:
 		
 		#test
 		self.test_model('stopword-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
-
 	
 	def experiment3_length_filtering(self):
 		length_filtered_vocabulary = self.vocabulary[:]
@@ -209,5 +208,26 @@ class Classifier:
 		
 		#test
 		self.test_model('wordlength-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
+
+	def experiment4_frequency_filtering(self, cutoff_frequency):
+		frequency_filtered_vocabulary = self.vocabulary[:]
+		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
+		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
+		spam_vocabulary_probs = {}
+		ham_vocabulary_probs = {}
+
+		#build model
+		for word in self.vocabulary:
+			word_frequency = self.spam_vocabulary_frequencies[word] + self.ham_vocabulary_frequencies[word]
+			if word_frequency <= cutoff_frequency:
+				frequency_filtered_vocabulary.remove(word)
+				spam_total_words-=self.spam_vocabulary_frequencies[word]
+				ham_total_words-=self.ham_vocabulary_frequencies[word]
+				
+		#write model
+		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data('frequencyfiltered-model.txt', frequency_filtered_vocabulary, spam_total_words, ham_total_words)
+		
+		#test
+		self.test_model('frequencyfiltered-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
 
 
