@@ -178,9 +178,9 @@ class Classifier:
 			file.write("%s  " % index)
 			file.write(word + '  ')
 			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s  " % self.ham_vocabulary_probs[word])
+			file.write("%s  " % ham_vocabulary_probs[word])
 			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
-			file.write("%s" % self.spam_vocabulary_probs[word])
+			file.write("%s" % spam_vocabulary_probs[word])
 
 		file.close()
 
