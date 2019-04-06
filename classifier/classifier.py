@@ -44,21 +44,21 @@ class Classifier:
 
 		self.vocabulary = list(set(self.vocabulary))
 
-	def add_smoothing(self):
+	def add_smoothing(self, smoothing_value=SMOOTHING_DELTA):
 		print("adding smoothing")
 		spam_words = self.spam_vocabulary_frequencies.keys()
 		ham_words = self.ham_vocabulary_frequencies.keys()
 
 		for word in self.vocabulary:
 			if word not in spam_words:
-				self.spam_vocabulary_frequencies[word] = Classifier.SMOOTHING_DELTA
+				self.spam_vocabulary_frequencies[word] = smoothing_value
 			else:
-				self.spam_vocabulary_frequencies[word] += Classifier.SMOOTHING_DELTA
+				self.spam_vocabulary_frequencies[word] += smoothing_value
 
 			if word not in ham_words:
-				self.ham_vocabulary_frequencies[word] = Classifier.SMOOTHING_DELTA
+				self.ham_vocabulary_frequencies[word] = smoothing_value
 			else:
-				self.ham_vocabulary_frequencies[word] += Classifier.SMOOTHING_DELTA
+				self.ham_vocabulary_frequencies[word] += smoothing_value
 
 	def write_model_data(self, output_file_name, vocabulary, spam_total_word_count=None, ham_total_word_count=None):
 		file = open(output_file_name, "w")
@@ -97,12 +97,8 @@ class Classifier:
 		print("Writing to %s" % output_file_name)
 		all_training_file_names = os.listdir(Classifier.TEST_DATASET_PATH)
 		classified_wrong = 0
-		
-		#total_test_file_count = len(all_training_file_names)
 
 		for index, file_name in enumerate(all_training_file_names):
-			# import pdb; pdb.set_trace()
-			#print("** file number %s/%s **" % (index, total_test_file_count))
 			file = open(Classifier.TEST_DATASET_PATH+"/"+file_name, encoding="latin-1")
 			lines = file.readlines()
 
@@ -163,7 +159,7 @@ class Classifier:
 		ham_vocabulary_probs = {}
 
 		#build model
-		file_input = open(Classifier.DATASET_PATH+"/stopWords.txt")
+		file_input = open(Classifier.DATASET_PATH+"/stopWords.txt", encoding="latin-1")
 		lines = file_input.readlines()
 		stop_words = []
 		for line in lines:
@@ -209,7 +205,7 @@ class Classifier:
 		#test
 		self.test_model('wordlength-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
 
-	def experiment4_frequency_filtering(self, cutoff_frequency):
+	def experiment4_frequency_filtering(self, file_name, lower_cutoff_frequency, higher_cutoff_frequency):
 		frequency_filtered_vocabulary = self.vocabulary[:]
 		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
 		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
@@ -221,15 +217,50 @@ class Classifier:
 			word_frequency = self.spam_vocabulary_frequencies[word] + self.ham_vocabulary_frequencies[word]
 			#subtract smoothing frequency before checking the threshold
 			word_frequency-=(2*Classifier.SMOOTHING_DELTA)
-			if word_frequency <= cutoff_frequency:
+			if lower_cutoff_frequency <= word_frequency and word_frequency <= higher_cutoff_frequency:
 				frequency_filtered_vocabulary.remove(word)
 				spam_total_words-=self.spam_vocabulary_frequencies[word]
 				ham_total_words-=self.ham_vocabulary_frequencies[word]
 				
 		#write model
-		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data('frequencyfiltered-model.txt', frequency_filtered_vocabulary, spam_total_words, ham_total_words)
+		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data(file_name + '-model.txt', frequency_filtered_vocabulary, spam_total_words, ham_total_words)
 		
 		#test
-		self.test_model('frequencyfiltered-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
+		self.test_model(file_name + '-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
+
+	def experiment4_most_frequent_filtering(self, file_name, frequency_percent):
+		frequency_filtered_vocabulary = self.vocabulary[:]
+		spam_total_words = sum(self.spam_vocabulary_frequencies.values())
+		ham_total_words = sum(self.ham_vocabulary_frequencies.values())
+		spam_vocabulary_probs = {}
+		ham_vocabulary_probs = {}
+
+		vocabulary_size = len(frequency_filtered_vocabulary)
+		number_of_words_to_remove = (frequency_percent/100) * vocabulary_size
+
+		vocabulary_dictonary = {}
+
+		#build model
+		for word in self.vocabulary:
+			word_frequency = self.spam_vocabulary_frequencies[word] + self.ham_vocabulary_frequencies[word]
+			vocabulary_dictonary[word] = word_frequency
+
+		vocabulary_dictonary = sorted(vocabulary_dictonary.items(), key=lambda kv: kv[1])
+		vocabulary_dictonary.reverse()
+		vocabulary_dictonary = dict(vocabulary_dictonary)
+			
+		for index, word in enumerate(vocabulary_dictonary):
+			if index <= number_of_words_to_remove:
+				frequency_filtered_vocabulary.remove(word)
+				spam_total_words-=self.spam_vocabulary_frequencies[word]
+				ham_total_words-=self.ham_vocabulary_frequencies[word]
+			else:
+				break
+				
+		#write model
+		spam_vocabulary_probs, ham_vocabulary_probs = self.write_model_data(file_name + '-model.txt', frequency_filtered_vocabulary, spam_total_words, ham_total_words)
+		
+		#test
+		self.test_model(file_name + '-result.txt', spam_vocabulary_probs, ham_vocabulary_probs)
 
 
