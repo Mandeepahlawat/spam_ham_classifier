@@ -21,6 +21,7 @@ class Classifier:
 	def build_model(self):
 		print("building model...")
 		all_training_file_names = os.listdir(Classifier.TRAIN_DATASET_PATH)
+		all_training_file_names.sort()
 
 		for file_name in all_training_file_names:
 			file = open(Classifier.TRAIN_DATASET_PATH+"/"+file_name, encoding="latin-1")
@@ -96,6 +97,7 @@ class Classifier:
 		file_to_write = open(output_file_name, "w")
 		print("Writing to %s" % output_file_name)
 		all_training_file_names = os.listdir(Classifier.TEST_DATASET_PATH)
+		all_training_file_names.sort()
 		classified_wrong = 0
 
 		for index, file_name in enumerate(all_training_file_names):
