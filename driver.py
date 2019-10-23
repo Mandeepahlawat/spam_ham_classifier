@@ -31,14 +31,14 @@ def main():
 
 	experiment5_file_name = 'smoothing'
 	
-	for n in range(1,10):
+	for n in range(0,11):
 		smoothing_value = round((n*0.1),1)
 		file_name = experiment5_file_name+str(smoothing_value)
 		print("------Experiment 5, smoothing value %s------"% smoothing_value)
 		classifier_5 = Classifier()
 		classifier_5.build_model()
 		classifier_5.add_smoothing(smoothing_value)
-		classifier_5.spam_vocabulary_probs, classifier.ham_vocabulary_probs = classifier.write_model_data(file_name+'model.txt', classifier.vocabulary)
-		classifier_5.test_model(file_name+'baseline-result.txt', classifier.spam_vocabulary_probs, classifier.ham_vocabulary_probs)
+		classifier_5.spam_vocabulary_probs, classifier_5.ham_vocabulary_probs = classifier_5.write_model_data(file_name+'model.txt', classifier_5.vocabulary, smoothing_value=smoothing_value)
+		classifier_5.test_model(file_name+'baseline-result.txt', classifier_5.spam_vocabulary_probs, classifier_5.ham_vocabulary_probs)
 
 main()

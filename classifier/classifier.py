@@ -61,7 +61,7 @@ class Classifier:
 			else:
 				self.ham_vocabulary_frequencies[word] += smoothing_value
 
-	def write_model_data(self, output_file_name, vocabulary, spam_total_word_count=None, ham_total_word_count=None):
+	def write_model_data(self, output_file_name, vocabulary, spam_total_word_count=None, ham_total_word_count=None, smoothing_value=SMOOTHING_DELTA):
 		file = open(output_file_name, "w")
 		print("Writing to %s" % output_file_name)
 		spam_total_words = 0
@@ -85,9 +85,9 @@ class Classifier:
 				file.write("\n")
 			file.write("%s  " % index)
 			file.write(word + '  ')
-			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
+			file.write("%s  " % (int(self.ham_vocabulary_frequencies[word] - smoothing_value)))
 			file.write("%s  " % ham_vocabulary_probs[word])
-			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - Classifier.SMOOTHING_DELTA)))
+			file.write("%s  " % (int(self.spam_vocabulary_frequencies[word] - smoothing_value)))
 			file.write("%s" % spam_vocabulary_probs[word])
 
 		file.close()
@@ -118,8 +118,15 @@ class Classifier:
 			for word in total_words:
 				#TODO: what to do when the word is not in train data?
 				if(word in spam_prob.keys()):
-					spam_score += math.log(spam_prob[word])
-					ham_score += math.log(ham_prob[word])
+					if spam_prob[word] == 0:
+						spam_score += 0
+					else:
+						spam_score += math.log(spam_prob[word])
+
+					if ham_prob[word] == 0:
+						ham_score += 0
+					else:
+						ham_score += math.log(ham_prob[word])
 
 			index = int(index) + 1
 			if index != 1:
@@ -252,7 +259,7 @@ class Classifier:
 		vocabulary_dictonary = dict(vocabulary_dictonary)
 			
 		for index, word in enumerate(vocabulary_dictonary):
-			if index <= number_of_words_to_remove:
+			if index < number_of_words_to_remove:
 				frequency_filtered_vocabulary.remove(word)
 				spam_total_words-=self.spam_vocabulary_frequencies[word]
 				ham_total_words-=self.ham_vocabulary_frequencies[word]
